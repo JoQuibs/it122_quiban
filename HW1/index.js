@@ -1,36 +1,19 @@
-import http from 'http';
-import fs from 'fs';
-
-function serveStatic(res, path, contentType, responseCode){
-  if(!responseCode) responseCode = 200;
-  console.log(__dirname + path)
-  fs.readFile(__dirname + path, function(err, data){
-      if(err){
-        res.writeHead(500, {'Content-Type': 'text/plain'});
-        res.end('Internal Server Error');
-      }
-      else{
-        res.writeHead(responseCode, {'Content-Type': contentType});
-        res.end(data);
-      }
-  });
-}
-
-http.createServer(function(req,res){
-  console.log('createServer got request')
+import { createServer } from "http"; 
+createServer(function(req,res) {
+  console.log(req.url)
   var path = req.url.toLowerCase();
   switch(path) {
-    case '/': 
-      serveStatic(res, 'home.html', 'text/html');
+    case '/':
+      res.writeHead(200, {'Content-Type': 'text/plain'});
+      res.end('Home page');
       break;
     case '/about':
       res.writeHead(200, {'Content-Type': 'text/plain'});
-      res.end('About');
+      res.end('About me: Call me Jomar');
       break;
     default:
       res.writeHead(404, {'Content-Type': 'text/plain'});
-      res.end('404:Page not found.');
-  }
-  
+      res.end('Not found');
+      break;
+    }
 }).listen(process.env.PORT || 3000);
-console.log('after createServer')
