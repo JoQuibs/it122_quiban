@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Home</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="container">
+  <h1>Welcome to the Home Page</h1>
+  <ul>
+    <% data.forEach(function(item) { %>
+      <li>
+        Name: <%= item.name %>
+        <a href="/detail?id=<%= item.key %>">View Details</a>
+      </li>
+    <% }); %>
+  </ul>
+  </div>
+</body>
+</html>
