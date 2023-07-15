@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Home</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="container">
+  <h1>Welcome to the Home Page</h1>
+  <ul>
+    <% data.forEach(function(game) { %>
+      <li>
+        Title: <%= game.title %>
+        <a href="/detail?id=<%= game.title %>">View Details</a>
+      </li>
+    <% }); %>
+  </ul>
+  </div>
+</body>
+</html>
