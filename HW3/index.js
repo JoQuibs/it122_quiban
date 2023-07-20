@@ -20,7 +20,7 @@ app.get('/', (req, res, next) => {
 });
 
 app.get('/detail', (req, res, next) => {
-    Game.findOne({game: req.query.game }).lean()
+    Game.findOne({title:req.query.id}).lean()
     .then((game) => {
         console.log(game);
         res.render('detail', { layout: 'index', game });
