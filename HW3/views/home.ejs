@@ -9,12 +9,21 @@
   <h1>Welcome to the Home Page</h1>
   <ul>
     <% data.forEach(function(game) { %>
+      
+      <!--HW5-->
       <li>
-        Title: <%= game.title %>
+        Title: <span id="game-title"></span>
         <a href="/detail?id=<%= game.title %>">View Details</a>
       </li>
     <% }); %>
   </ul>
   </div>
+  <script>
+    const gameTitles = document.querySelectorAll('.game-title');
+
+    gameTitles.forEach(function(gameTitle) {
+      gameTitle.innerHTML = gameTitle.dataset.title;
+    });
+  </script>
 </body>
 </html>
