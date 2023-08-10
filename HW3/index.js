@@ -14,29 +14,53 @@ app.use('/api', cors());
 app.set('view engine', 'ejs');
 
 //HW4 REST API
-// Get all items
-app.get('/api/items', async (req, res) => {
-  const games = await Game.find();
-  res.status(200).json(games);
+app.get('/api/items', (req, res) => {
+  return Game.find({}).lean()
+    .then((games) => {
+        res.json(games);
+    })
+    .catch(err => res.status(500).send('Error occurred: database error.'));
 });
 
-// Get a single item
-app.get('/api/items/:id', async (req, res) => {
-  const game = await Game.findOne({ _id: req.params.id });
-  res.status(200).json(game);
+
+app.get('/api/detail', (req, res) => {
+  return Game.findOne({model:req.query.model}).lean()
+  .then((game) => {
+
+    res.json(game);
+  })
+  .catch(err => next(err));
 });
 
-// Delete an item
-app.delete('/api/items/:id', async (req, res) => {
-  await Game.deleteOne({ _id: req.params.id });
-  res.status(204).send();
+
+app.post('/api/added', (req, res) => {
+  const newGame = req.body
+  return Game.update({'model':newGame.model}, newGame, {upsert:true}, (err, result) => {
+    if (err) return next(err);
+    console.log(result);
+     res.json(result)
+  }); 
 });
 
-// Add or update an item
-app.post('/api/items', async (req, res) => {
-  const game = new Game(req.body);
-  await game.save();
-  res.status(201).json(game);
+
+app.delete('/api/delete', (req, res) => {
+  if(!req.query.model) {
+    return res.status(400).send("game not found")
+  }
+  Game.findOneAndRemove({model: req.query.model}).then(game => {
+    res.json(game)
+  })
+  .catch(err => {
+    res.status(500).json(err)
+  });
+});
+
+app.get('/api/v2/delete/:id', (req, res, next) => {
+  Game.deleteOne({"_id":req.params.id }, (err, result) => {
+    if (err) return next(err);
+    console.log(result)
+    res.json({"deleted": result});
+  });
 });
 
 //HW3
