@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./styles.css">
+    <title>Home React</title>
+
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    
+    <!-- Don't use this in production: -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+  
+    const greeting = "IT 122!";
+    let games = <%-games%>;
+    
+    const Headers = () => {
+        return (
+            
+                <h1>Welcome to React Home Page</h1>
+        )
+    }
+
+
+    const List = (props) => {
+        const list = props.list
+        const objItems = list.map((item)=><li id={item._id} key={item._id} onClick={props.clickFunc}>{item.title}</li>)
+        
+        if(list) {
+            return (
+            <div class="container">
+                <h2>List of Games</h2>
+                <ul>{objItems}</ul>
+            </div>
+            )
+        }
+
+        return <h2>Here is where list would be</h2>
+    }
+
+    const ItemDetail = (props) => {
+        return (
+            <div class="container">
+                    <hr />
+                    <h2>Game Detail Form</h2>
+                    <form>
+                    Title: <input type="text" name="title" value={props.item.title || ""} onChange={props.handleChange} /><br/>
+                    Release Year: <input type="text" name="releaseYear" value={props.item.releaseYear || ""} onChange={props.handleChange} /><br/>
+                    Price: <input type="text" name="price" value={props.item.price || ""} onChange={props.handleChange} /><br/>
+
+                    </form>
+                    <button name="clear" onClick={props.clearFields}>Clear</button><br/>
+                    <button name="save" onClick={props.saveItem}>Save</button><br/>
+                    <button name="delete" onClick={props.deleteItem}>Delete</button><br/>
+                </div>
+        )
+    }
+
+
+    class App extends React.Component {
+        constructor(props) {
+            super(props)
+            this.state = {
+                "data": <%-games%>,
+                "selector": {empty:true}
+
+            }
+                  
+            this.clickHandler = this.clickHandler.bind(this)
+            this.handleChange = this.handleChange.bind(this)
+            this.clearHandler = this.clearHandler.bind(this)
+            this.saveHandler = this.saveHandler.bind(this)
+           
+
+        }
+                  
+        clickHandler = (event) => {
+            console.log(event)
+            const game = this.state.data.find((game)=>game._id == event.target.id)
+            this.setState({"selector": game})
+        }
+
+        handleChange = (event) => {
+            console.log(event.target.value)
+            let newItem = this.state.selector
+            newItem[event.target.name] = event.target.value
+            this.setState({"selector": newItem})
+        }
+
+        clearHandler = () => {
+            this.setState({"selector":{empty:true}});
+        }
+        
+        saveHandler = () => {
+            //console.log(JSON.stringify(this.state.data))
+            
+            let selectorObj = this.state.selector
+            console.log("from saveHandler: " + JSON.stringify(selectorObj))
+            let url = '/api/add'
+            fetch(url, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(selectorObj)
+            })
+            .then(res => res.json())
+            .then((json) => {
+                console.log('Response: ' + JSON.stringify(json))               
+                //if new entry => new item, add to list
+                if (json.updated === false) {
+                    let newitem = json.data;
+                    let updatedList = <%-games%>;
+                    updatedList.push(newitem);
+                    this.setState({ data : updatedList })
+                    console.log(JSON.stringify(this.state.data))
+                }
+            })
+        }
+                      
+        deleteHandler = () => {
+            if(this.state.selector.empty === true) return
+            
+            let selectorObj = this.state.selector;
+            console.log("from deleteHandler: " + JSON.stringify(selectorObj));
+            let selectorTitle = selectorObj.title;
+            let url = '/api/delete/' + selectorTitle;
+            fetch(url)
+            .then(res => res.json())
+            .then((json) => {
+                console.log('Response: ' + JSON.stringify(json))               
+                //if successfull, filter out list
+                if(json.success === true) {
+                    let updatedList = this.state.data.filter(game => game.title !== selectorTitle)
+                    this.setState({"data":updatedList});
+                }
+            })
+            this.clearHandler();
+        }
+
+        render() {
+        return (
+            <div class="container">
+                <Headers />
+                <List 
+                    list={this.state.data} 
+                    clickFunc={this.clickHandler} 
+                />
+                <ItemDetail 
+                    item={this.state.selector} 
+                    handleChange={this.handleChange} clearFields={this.clearHandler} 
+                    saveItem={this.saveHandler} 
+                    deleteItem={this.deleteHandler} 
+                />
+
+                
+            </div>
+            
+        )
+    }
+    }
+
+
+    const container = document.getElementById('root');
+    const root = ReactDOM.createRoot(container);
+
+    root.render(<App />);
+
+
+</script>
+</body>
+</html>
