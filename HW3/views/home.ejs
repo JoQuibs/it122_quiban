@@ -1,29 +1,28 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Home</title>
-  <link rel="stylesheet" href="/styles.css">
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/styles.css">
+    <title>Home Page</title>
 </head>
 <body>
-  <div class="container">
-  <h1>Welcome to the Home Page</h1>
-  <ul>
-    <% data.forEach(function(game) { %>
-      
-      <!--HW5-->
-      <li>
-        Title: <span id="game-title"></span>
-        <a href="/detail?id=<%= game.title %>">View Details</a>
-      </li>
-    <% }); %>
-  </ul>
-  </div>
-  <script>
+    <div class="container">
+    <h1>Welcome to the Home Page</h1>
+    <h2> List of Games</h2>
+    <ul>
+      <% games.forEach(game => { %>
+        <li><a href="/detail?id=<%= game.title %>"> <%= game.title %> </li>
+      <% }); %>
+    </ul>
+    </div>
+</body>
+<script>
     const gameTitles = document.querySelectorAll('.game-title');
 
     gameTitles.forEach(function(gameTitle) {
       gameTitle.innerHTML = gameTitle.dataset.title;
     });
-  </script>
-</body>
+</script>
 </html>
