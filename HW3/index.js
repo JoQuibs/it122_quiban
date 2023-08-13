@@ -1,90 +1,163 @@
-'use strict'
-import express from "express";
+import express from 'express';
 import Game from './models/item.js';
-import ejs from 'ejs';
-
 import cors from 'cors';
 
-const app = express();
-
+const app = express(); 
 app.set('port', process.env.PORT || 3000);
-app.use(express.static('./public'));
-app.use(express.json());
-app.use('/api', cors());
-app.set('view engine', 'ejs');
+app.set('view engine', 'ejs'); 
+app.use(express.static('./public')); 
+app.use(express.urlencoded({extended:false})); 
+app.use(express.json()); 
+app.use('/api', cors()); 
 
-//HW4 REST API
-app.get('/api/items', (req, res) => {
-  return Game.find({}).lean()
-    .then((games) => {
-        res.json(games);
-    })
-    .catch(err => res.status(500).send('Error occurred: database error.'));
+// getAll()
+app.get('/api/games', (req, res) => {
+	Game.find({})
+		.lean()
+		.then((games) => {
+			if (games) {
+				res.status(200);
+				return res.json({ success: true, msg: 'getAll()', games: games });
+			} else {
+				res.status(500);
+				return res.json({ success: false, msg: 'getAll() fail' });
+			}
+		})
+		.catch((err) => next(err));
+});
+
+// getItem()
+app.get('/api/game/:title', (req, res) => {
+	const search = req.params._id;
+	Game.findOne({ title: search })
+		.lean()
+		.then((game) => {
+			if (game) {
+				res.status(200);
+				return res.json({ success: true, msg:'getItem()', game: game });
+			} else {
+				res.status(500);
+				return res.json({ success: false, msg:'getItem() fail' });
+			}
+		})
+		.catch((err) => console.log(err));
+});
+
+app.get('/api/delete/:title', (req, res) => {
+	const search = req.params._id;
+	Game.findOneAndDelete({ title: search })
+		.then((result) => {
+			if (result) {
+				res.status(200);
+				return res.json({ success: true, msg:`Found and Deleted: ${result}` });
+			} else {
+				res.status(500);
+				return res.json({ success: false, msg:`Failed to find and delete: ${search}` });
+			}
+		})
+		.catch((err) => {
+			console.log(err);
+		});
+});
+
+//add new entry
+app.post('/api/add', (req, res,next) => {
+	if(!req.body.title) return res.status(500).json({ success: false, msg:'Need title at least'});
+
+	let obj = {
+		title: req.body.title,
+		releaseYear: req.body.releaseYear,
+		price: req.body.price,
+		_id: req.body._id
+	}
+
+	Game.updateOne({title: obj.title}, obj, (err,result)=>{
+		if (err) return next(err);
+
+		if(result.matchedCount == 1) {
+			return res.status(200).json({ success: true, msg: `${obj.title} updated`, updated: true, _id: obj._id})
+		} else {
+			let newObj = new Game({
+		    title: req.body.title,
+		    releaseYear: req.body.releaseYear,
+		    price: req.body.price
+			})
+			console.log(newObj)
+			return newObj.save((err,entry)=> {
+				if (err) return next(err);
+
+				return res.status(200).json({ success: true , msg:`add ${entry.title} to Database`, updated: false, data: entry})
+			})
+		}
+	})
+})
+
+
+//React homepage
+app.get('/react', (req, res) => {
+	res.type('text/html');
+	Game.find({})
+		.lean()
+		.then((games) => {
+			res.render('react', { games: JSON.stringify(games) });
+		})
+		.catch((err) => next(err));
+});
+
+//Home
+app.get('/', (req, res) => {
+	res.type('text/html');
+	Game.find({})
+		.lean()
+		.then((games) => {
+			res.render('home', { games });
+		})
+		.catch((err) => next(err));
+});
+
+//About
+app.get('/about', (req, res) => {
+	res.type('text/plain');
+	res.send('I like games');
+});
+
+//Detail
+app.get('/detail', (req, res) => {
+	console.log(req.query._id);
+	let search = req.query._id;
+	res.type('text/html');
+	Game.findOne({ title: search })
+		.lean()
+		.then((game) => {
+			res.render('detail', { game: game });
+		})
+		.catch((err) => next(err));
 });
 
 
-app.get('/api/detail', (req, res) => {
-  return Game.findOne({model:req.query.model}).lean()
-  .then((game) => {
-
-    res.json(game);
-  })
-  .catch(err => next(err));
+//delete route
+app.get('/delete', (req, res) => {
+	console.log(req.query._id);
+	let search = req.query.title;
+	res.type('text/html');
+	Game.findOneAndDelete({ title: search })
+		.then((result) => {
+			console.log(`Deleted: ${result}`);
+		})
+		.catch((err) => {
+			next(err);
+		});
 });
 
 
-app.post('/api/added', (req, res) => {
-  const newGame = req.body
-  return Game.update({'model':newGame.model}, newGame, {upsert:true}, (err, result) => {
-    if (err) return next(err);
-    console.log(result);
-     res.json(result)
-  }); 
-});
 
-
-app.delete('/api/delete', (req, res) => {
-  if(!req.query.model) {
-    return res.status(400).send("game not found")
-  }
-  Game.findOneAndRemove({model: req.query.model}).then(game => {
-    res.json(game)
-  })
-  .catch(err => {
-    res.status(500).json(err)
-  });
-});
-
-app.get('/api/v2/delete/:id', (req, res, next) => {
-  Game.deleteOne({"_id":req.params.id }, (err, result) => {
-    if (err) return next(err);
-    console.log(result)
-    res.json({"deleted": result});
-  });
-});
-
-//HW3
-app.get('/', async (req, res, next) => {
-  const games = await getGames();
-  res.render('home', { data: games });
-});
-
-app.get('/detail', async (req, res, next) => {
-    const game = await Game.findOne({title:req.query.id});
-    res.render('detail', { layout: 'index', game });
-});
-
+// define 404 handler
 app.use((req, res) => {
-  res.type('text/plain');
-  res.status(404);
-  res.send('404 - Not found');
+	res.type('text/plain');
+	res.status(404);
+	res.send('404 - Not found');
 });
 
 app.listen(app.get('port'), () => {
-  console.log('Express started');
+	console.log('Express started');
 });
-
-async function getGames() {
-  const games = await Game.find();
-  return games;
-}
