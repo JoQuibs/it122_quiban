@@ -28,7 +28,7 @@ app.get('/api/games', (req, res) => {
 
 // getItem()
 app.get('/api/game/:title', (req, res) => {
-	const search = req.params._id;
+	const search = req.params.title;
 	Game.findOne({ title: search })
 		.lean()
 		.then((game) => {
@@ -44,7 +44,7 @@ app.get('/api/game/:title', (req, res) => {
 });
 
 app.get('/api/delete/:title', (req, res) => {
-	const search = req.params._id;
+	const search = req.params.title;
 	Game.findOneAndDelete({ title: search })
 		.then((result) => {
 			if (result) {
@@ -58,6 +58,45 @@ app.get('/api/delete/:title', (req, res) => {
 		.catch((err) => {
 			console.log(err);
 		});
+});
+
+
+//React homepage
+app.get('/react', (req, res) => {
+	res.type('text/html');
+	Game.find({})
+		.lean()
+		.then((games) => {
+			res.render('react', { games: JSON.stringify(games) });
+		})
+		.catch((err) => next(err));
+});
+
+app.get('/', (req, res) => {
+	res.type('text/html');
+	Game.find({})
+		.lean()
+		.then((games) => {
+			res.render('home', { games });
+		})
+		.catch((err) => next(err));
+});
+
+app.get('/about', (req, res) => {
+	res.type('text/plain');
+	res.send('I like games');
+});
+
+app.get('/detail', (req, res) => {
+	console.log(req.query._id);
+	let search = req.query._id;
+	res.type('text/html');
+	Game.findOne({ title: search })
+		.lean()
+		.then((game) => {
+			res.render('detail', { game: game });
+		})
+		.catch((err) => next(err));
 });
 
 //add new entry
@@ -92,53 +131,10 @@ app.post('/api/add', (req, res,next) => {
 	})
 })
 
-
-//React homepage
-app.get('/react', (req, res) => {
-	res.type('text/html');
-	Game.find({})
-		.lean()
-		.then((games) => {
-			res.render('react', { games: JSON.stringify(games) });
-		})
-		.catch((err) => next(err));
-});
-
-//Home
-app.get('/', (req, res) => {
-	res.type('text/html');
-	Game.find({})
-		.lean()
-		.then((games) => {
-			res.render('home', { games });
-		})
-		.catch((err) => next(err));
-});
-
-//About
-app.get('/about', (req, res) => {
-	res.type('text/plain');
-	res.send('I like games');
-});
-
-//Detail
-app.get('/detail', (req, res) => {
-	console.log(req.query._id);
-	let search = req.query._id;
-	res.type('text/html');
-	Game.findOne({ title: search })
-		.lean()
-		.then((game) => {
-			res.render('detail', { game: game });
-		})
-		.catch((err) => next(err));
-});
-
-
 //delete route
 app.get('/delete', (req, res) => {
 	console.log(req.query._id);
-	let search = req.query.title;
+	let search = req.query._id;
 	res.type('text/html');
 	Game.findOneAndDelete({ title: search })
 		.then((result) => {
